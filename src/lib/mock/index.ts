@@ -13,7 +13,7 @@ export { mockGroups, type KitaGroup } from "./groups";
 export { mockLocations, type KitaLocation } from "./locations";
 export { mockSchedule, type ScheduleItem } from "./schedule";
 export { mockDailyTasks, type DailyTaskTemplate } from "./dailyTasks";
-export { mockStaff, mockStaffBreaks, type Staff, type StaffBreak } from "./staff";
+export { mockStaff, mockStaffBreaks, type Staff, type StaffRole, type StaffBreak } from "./staff";
 export {
   mockAblaufMeals,
   mockTaskAssignments,

@@ -173,3 +173,25 @@ Staff daily loop first. **No report sending.** Parents receive info when they pi
 - **Staff** (userId, role, locationId, groupAssignments)
 
 **No DailyReport table.**
+
+---
+
+## 6. TODO Notes For Future Agents
+
+- **TODO(cursor-rules):** Add persistent Cursor rules in `.cursor/rules/*.mdc` for agent behavior.
+- **Context note (language policy):**
+  - User chats in English and prefers assistant explanations in English.
+  - App UI text remains German for now (later multilingual support planned).
+  - Rule intent: "Assistant replies in English; do not switch response language just because UI strings/code contain German."
+- **Context note (agent roles):**
+  - User wants role-specific behavior to be persistent and effective.
+  - There is a separate agent workflow for git-focused tasks.
+  - Rule intent: include a dedicated git-safety/role rule (status/diff/log first, no force push unless explicitly requested, no unsolicited commits).
+- **Context note (theming governance):**
+  - Theme validation should remain warning-based (no blocking), matching current customer onboarding process.
+  - Customer-specific theme changes are expected to be controlled by the developer after initial setup.
+- **TODO(shiftplan-entry-speed):** Add a faster shift entry workflow for monthly plan editing (e.g. fill handle, copy across weekdays/weeks, bulk assignment shortcuts).
+- **TODO(staff-shift-requests):** Add staff shift requests for upcoming months (request flow, review state, and KL decision handling).
+- **TODO(shift-swap-approval):** Add staff-to-staff shift swap requests with mandatory KL approval before plan changes apply.
+- **TODO(vacation-planning):** Add vacation planning flow (requests, overlap visibility, approval/rejection, and staffing impact hints).
+- **TODO(org-wide-availability):** Add organization-wide staff availability checks across locations (including runner/springer allocation support).

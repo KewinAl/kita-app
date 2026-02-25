@@ -5,18 +5,25 @@ import { mockChildren } from "@/lib/mock";
 
 export default async function PrototypeIncidentPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ childId: string }>;
+  searchParams: Promise<{ group?: string; date?: string }>;
 }) {
   const { childId } = await params;
+  const { group, date } = await searchParams;
+  const extra = new URLSearchParams();
+  if (group) extra.set("group", group);
+  if (date) extra.set("date", date);
+  const backHref = `/prototype/child-log/${childId}${extra.toString() ? `?${extra.toString()}` : ""}`;
   const child = mockChildren.find((c) => c.id === childId);
 
   return (
-    <main className="mx-auto max-w-2xl px-4 pb-8 pt-4">
+    <main className="mx-auto max-w-2xl px-4 pb-8 pt-4 md:max-w-4xl lg:max-w-6xl">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <Link
-            href={`/prototype/child-log/${childId}`}
+            href={backHref}
             className="text-sm text-muted-foreground hover:underline"
           >
             ← Zurück

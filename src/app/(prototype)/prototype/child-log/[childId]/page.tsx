@@ -8,7 +8,7 @@ export default async function PrototypeChildLogPage({
 }) {
   const { childId } = await params;
   return (
-    <main className="mx-auto max-w-2xl px-4 pb-8 pt-4">
+    <main className="mx-auto max-w-2xl px-4 pb-8 pt-4 md:max-w-4xl lg:max-w-6xl">
       <Suspense fallback={<div className="animate-pulse p-4">Laden…</div>}>
         <ChildDayLogMock childId={childId} />
       </Suspense>

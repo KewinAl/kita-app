@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePrototype } from "@/context/PrototypeContext";
 import {
-  mockTaskAssignments,
   mockStaff,
-  mockStaffBreaks,
 } from "@/lib/mock";
+import { PROTOTYPE_TODAY, clampToCalendarWindow, formatDateShort } from "@/lib/prototypeCalendar";
 
-const TODAY = "2025-02-19";
+const TODAY = PROTOTYPE_TODAY;
 
 const MEAL_LABELS = {
   znueni: "Znüni",
@@ -19,26 +19,30 @@ const MEAL_LABELS = {
 } as const;
 
 export function AblaufEingabeMock() {
+  const searchParams = useSearchParams();
+  const selectedDate = clampToCalendarWindow(searchParams.get("date") ?? TODAY);
   const {
-    plannedLunchItems,
-    plannedZnüni,
-    plannedZvieri,
+    getPlannedLunchItems,
+    getPlannedZnüni,
+    getPlannedZvieri,
     setPlannedZnüni,
     setPlannedZvieri,
     addLunchItem,
     removeLunchItem,
     updateLunchItem,
     copyPlanToAllKids,
+    getTaskAssignments,
+    getBreaks,
   } = usePrototype();
 
-  const tasks = mockTaskAssignments.filter((t) => t.date === TODAY);
-  const breaks = mockStaffBreaks.filter((b) => b.date === TODAY);
+  const tasks = getTaskAssignments(selectedDate);
+  const breaks = getBreaks(selectedDate);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Link
-          href="/prototype/ablauf"
+          href={`/prototype/ablauf?date=${selectedDate}`}
           className="text-sm text-muted-foreground hover:underline"
         >
           ← Ablauf
@@ -47,7 +51,7 @@ export function AblaufEingabeMock() {
 
       <header>
         <h1 className="text-xl font-semibold">Ablauf — Eingabe</h1>
-        <p className="text-sm text-muted-foreground">Mi 19. Feb 2025</p>
+        <p className="text-sm text-muted-foreground">{formatDateShort(selectedDate)}</p>
       </header>
 
       <section>
@@ -60,8 +64,8 @@ export function AblaufEingabeMock() {
               <label className="text-sm font-medium">{MEAL_LABELS.znueni}</label>
               <input
                 type="text"
-                value={plannedZnüni}
-                onChange={(e) => setPlannedZnüni(e.target.value)}
+                value={getPlannedZnüni(selectedDate)}
+                onChange={(e) => setPlannedZnüni(e.target.value, selectedDate)}
                 placeholder="z.B. Obst, Brot"
                 className="w-full rounded border bg-background px-3 py-2 text-sm"
               />
@@ -71,31 +75,42 @@ export function AblaufEingabeMock() {
           <Card>
             <CardContent className="space-y-2 p-3">
               <label className="text-sm font-medium">{MEAL_LABELS.lunch}</label>
-              <p className="text-xs text-muted-foreground">
-                Einzelne Items (z.B. Spaghetti, Sauce, Salat)
-              </p>
-              {plannedLunchItems.map((item, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={item}
-                    onChange={(e) => updateLunchItem(i, e.target.value)}
-                    placeholder={`Item ${i + 1}`}
-                    className="flex-1 rounded border bg-background px-3 py-2 text-sm"
-                  />
+              {selectedDate > TODAY ? (
+                <p className="text-sm text-muted-foreground">—</p>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Einzelne Items (z.B. Spaghetti, Sauce, Salat)
+                  </p>
+                  {getPlannedLunchItems(selectedDate).map((item, i) => (
+                    <div key={i} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={item}
+                        onChange={(e) => updateLunchItem(i, e.target.value, selectedDate)}
+                        placeholder={`Item ${i + 1}`}
+                        className="flex-1 rounded border bg-background px-3 py-2 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeLunchItem(i, selectedDate)}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
                   <Button
                     type="button"
                     size="sm"
-                    variant="ghost"
-                    onClick={() => removeLunchItem(i)}
+                    variant="outline"
+                    onClick={() => addLunchItem(selectedDate)}
                   >
-                    ×
+                    + Item
                   </Button>
-                </div>
-              ))}
-              <Button type="button" size="sm" variant="outline" onClick={() => addLunchItem()}>
-                + Item
-              </Button>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -104,8 +119,8 @@ export function AblaufEingabeMock() {
               <label className="text-sm font-medium">{MEAL_LABELS.zvieri}</label>
               <input
                 type="text"
-                value={plannedZvieri}
-                onChange={(e) => setPlannedZvieri(e.target.value)}
+                value={getPlannedZvieri(selectedDate)}
+                onChange={(e) => setPlannedZvieri(e.target.value, selectedDate)}
                 placeholder="z.B. Joghurt, Kekse"
                 className="w-full rounded border bg-background px-3 py-2 text-sm"
               />
@@ -166,7 +181,11 @@ export function AblaufEingabeMock() {
         </Card>
       </section>
 
-      <Button type="button" className="w-full" onClick={() => copyPlanToAllKids()}>
+      <Button
+        type="button"
+        className="w-full"
+        onClick={() => copyPlanToAllKids(selectedDate)}
+      >
         Speichern & an Gruppe kopieren
       </Button>
     </div>

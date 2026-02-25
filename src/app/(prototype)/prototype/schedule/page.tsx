@@ -1,32 +1,41 @@
-import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { mockSchedule, mockAttendance, mockChildren } from "@/lib/mock";
+"use client";
 
-const TODAY = "2025-02-19";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { mockSchedule, mockChildren } from "@/lib/mock";
+import { DaySwitcherMock } from "@/components/prototype/DaySwitcherMock";
+import { PROTOTYPE_TODAY, clampToCalendarWindow, formatDateShort } from "@/lib/prototypeCalendar";
+import { usePrototype } from "@/context/PrototypeContext";
+
+const TODAY = PROTOTYPE_TODAY;
 
 export default function PrototypeSchedulePage() {
-  const absent = mockAttendance.filter(
-    (a) => a.date === TODAY && a.status === "absent"
-  );
-  const absentChildren = absent.map((a) =>
-    mockChildren.find((c) => c.id === a.childId)
-  );
+  const searchParams = useSearchParams();
+  const { getDailyPresenceStatus } = usePrototype();
+  const selectedDate = clampToCalendarWindow(searchParams.get("date") ?? TODAY);
+  const group = searchParams.get("group");
+  const absentChildren = mockChildren.filter((c) => {
+    const status = getDailyPresenceStatus(c.id, selectedDate);
+    return status === "planned_absence" || status === "absent_today";
+  });
 
   return (
-    <main className="mx-auto max-w-2xl px-4 pb-8 pt-4">
+    <main className="mx-auto max-w-2xl px-4 pb-8 pt-4 md:max-w-4xl lg:max-w-6xl">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <Link
-            href="/prototype/group"
+            href={`/prototype/group?group=${group ?? "g1"}&date=${selectedDate}`}
             className="text-sm text-muted-foreground hover:underline"
           >
             ← Zurück
           </Link>
+          <DaySwitcherMock basePath="/prototype/schedule" />
         </div>
 
         <header>
           <h1 className="text-xl font-semibold">Heutiger Ablauf</h1>
-          <p className="text-sm text-muted-foreground">Mi 19. Feb 2025</p>
+          <p className="text-sm text-muted-foreground">{formatDateShort(selectedDate)}</p>
         </header>
 
         {absentChildren.length > 0 && (
@@ -35,8 +44,7 @@ export default function PrototypeSchedulePage() {
               <h3 className="text-sm font-medium">Abwesend heute</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 {absentChildren
-                  .filter(Boolean)
-                  .map((c) => `${c!.firstName} ${c!.lastName}`)
+                  .map((c) => `${c.firstName} ${c.lastName}`)
                   .join(", ")}
               </p>
             </CardContent>

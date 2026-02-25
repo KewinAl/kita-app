@@ -2,17 +2,21 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   mockChildren,
-  mockAttendance,
   mockDayLogEntries,
   mockGroups,
 } from "@/lib/mock";
 import type { DayLogEntry, MealData, NapData, ActivityData, IncidentData } from "@/lib/mock";
+import { usePrototype } from "@/context/PrototypeContext";
+import { GroupSwitcherMock } from "./GroupSwitcherMock";
 
-const TODAY = "2025-02-19";
+import { PROTOTYPE_TODAY, clampToCalendarWindow } from "@/lib/prototypeCalendar";
+
+const TODAY = PROTOTYPE_TODAY;
 
 function MealEntry({ data }: { data: MealData }) {
   const labels = { breakfast: "Frühstück", lunch: "Mittagessen", snack: "Znüni/Zvieri" };
@@ -68,9 +72,9 @@ function IncidentEntry({ data }: { data: IncidentData }) {
   );
 }
 
-function DayLogPreview({ childId }: { childId: string }) {
+function DayLogPreview({ childId, dateKey }: { childId: string; dateKey: string }) {
   const entries = mockDayLogEntries
-    .filter((e) => e.childId === childId && e.date === TODAY)
+    .filter((e) => e.childId === childId && e.date === dateKey)
     .sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""));
 
   const meals = entries.filter((e) => e.type === "meal");
@@ -141,11 +145,16 @@ interface CheckOutHandoverMockProps {
 }
 
 export function CheckOutHandoverMock({ groupId }: CheckOutHandoverMockProps) {
+  const searchParams = useSearchParams();
+  const selectedDate = clampToCalendarWindow(searchParams.get("date") ?? TODAY);
+  const { getDailyPresenceStatus } = usePrototype();
   const effectiveGroupId = groupId ?? mockGroups[0]?.id ?? "g1";
-  const children = mockChildren.filter((c) => c.groupId === effectiveGroupId);
+  const children =
+    effectiveGroupId === "all"
+      ? mockChildren
+      : mockChildren.filter((c) => c.groupId === effectiveGroupId);
   const presentChildren = children.filter((child) => {
-    const att = mockAttendance.find((a) => a.childId === child.id && a.date === TODAY);
-    return att?.status === "present";
+    return getDailyPresenceStatus(child.id, selectedDate) === "present";
   });
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -154,12 +163,17 @@ export function CheckOutHandoverMock({ groupId }: CheckOutHandoverMockProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Link
-          href={effectiveGroupId ? `/prototype/group?group=${effectiveGroupId}` : "/prototype/group"}
+          href={
+            effectiveGroupId
+              ? `/prototype/group?group=${effectiveGroupId}&date=${selectedDate}`
+              : `/prototype/group?date=${selectedDate}`
+          }
           className="text-sm text-muted-foreground hover:underline"
         >
           ← Zurück
         </Link>
       </div>
+      <GroupSwitcherMock basePath="/prototype/check-out" includeAllOption />
 
       <header>
         <h1 className="text-xl font-semibold">Abgeben</h1>
@@ -201,7 +215,7 @@ export function CheckOutHandoverMock({ groupId }: CheckOutHandoverMockProps) {
                 </div>
                 {isExpanded && (
                   <div className="border-t bg-muted/30 px-3 pb-3">
-                    <DayLogPreview childId={child.id} />
+                    <DayLogPreview childId={child.id} dateKey={selectedDate} />
                   </div>
                 )}
               </CardContent>

@@ -1,5 +1,4 @@
 import { EntgegennehmenMock } from "@/components/prototype/EntgegennehmenMock";
-import { mockGroups } from "@/lib/mock";
 
 export default async function PrototypeCheckInPage({
   searchParams,
@@ -7,10 +6,10 @@ export default async function PrototypeCheckInPage({
   searchParams: Promise<{ group?: string }>;
 }) {
   const { group } = await searchParams;
-  const groupId = group ?? mockGroups[0]?.id ?? "g1";
+  const groupId = group ?? "all";
 
   return (
-    <main className="mx-auto max-w-2xl px-4 pb-8 pt-4">
+    <main className="mx-auto max-w-2xl px-4 pb-8 pt-4 md:max-w-4xl lg:max-w-6xl">
       <EntgegennehmenMock groupId={groupId} />
     </main>
   );

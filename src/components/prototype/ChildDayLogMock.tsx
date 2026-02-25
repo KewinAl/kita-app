@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   mockChildren,
   mockDayLogEntries,
-  mockAttendance,
 } from "@/lib/mock";
 import type { DayLogEntry, MealData, NapData, ActivityData, IncidentData } from "@/lib/mock";
+import { PROTOTYPE_TODAY, clampToCalendarWindow, formatDateShort } from "@/lib/prototypeCalendar";
+import { usePrototype } from "@/context/PrototypeContext";
 
-const TODAY = "2025-02-19";
+const TODAY = PROTOTYPE_TODAY;
 
 function MealEntry({ data }: { data: MealData }) {
   const labels = {
@@ -110,14 +111,20 @@ function LogEntry({ entry }: { entry: DayLogEntry }) {
 
 export function ChildDayLogMock({ childId }: { childId: string }) {
   const searchParams = useSearchParams();
+  const { getDailyPresenceStatus } = usePrototype();
   const groupId = searchParams.get("group");
+  const selectedDate = clampToCalendarWindow(searchParams.get("date") ?? TODAY);
+  const childExtra = new URLSearchParams();
+  if (groupId) childExtra.set("group", groupId);
+  childExtra.set("date", selectedDate);
+  const childExtraQuery = childExtra.toString();
   const child = mockChildren.find((c) => c.id === childId);
-  const backHref = groupId ? `/prototype/group?group=${groupId}` : "/prototype/group";
-  const attendance = mockAttendance.find(
-    (a) => a.childId === childId && a.date === TODAY
-  );
+  const backHref = groupId
+    ? `/prototype/group?group=${groupId}&date=${selectedDate}`
+    : `/prototype/group?date=${selectedDate}`;
+  const presence = getDailyPresenceStatus(childId, selectedDate);
   const entries = mockDayLogEntries
-    .filter((e) => e.childId === childId && e.date === TODAY)
+    .filter((e) => e.childId === childId && e.date === selectedDate)
     .sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""));
 
   if (!child) return null;
@@ -135,9 +142,9 @@ export function ChildDayLogMock({ childId }: { childId: string }) {
           {child.firstName} {child.lastName}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {attendance?.status === "present" && attendance.checkInTime
-            ? `✓ Eingecheckt ${attendance.checkInTime}`
-            : "Tageslog — 19. Feb 2025"}
+          {presence === "present"
+            ? "✓ Eingecheckt"
+            : `Tageslog — ${formatDateShort(selectedDate)}`}
         </p>
       </header>
 
@@ -151,12 +158,12 @@ export function ChildDayLogMock({ childId }: { childId: string }) {
         <Button size="sm" variant="outline">
           🎨 Aktivität
         </Button>
-        <Link href={`/prototype/photo/${childId}`}>
+        <Link href={`/prototype/photo/${childId}?${childExtraQuery}`}>
           <Button size="sm" variant="outline">
             📸 Foto
           </Button>
         </Link>
-        <Link href={`/prototype/incident/${childId}`}>
+        <Link href={`/prototype/incident/${childId}?${childExtraQuery}`}>
           <Button size="sm" variant="outline">
             ⚠️ Zwischenfall
           </Button>

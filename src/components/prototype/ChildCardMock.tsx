@@ -12,6 +12,7 @@ interface ChildCardMockProps {
   attendance?: AttendanceRecord;
   logTypes: DayLogType[];
   groupId?: string;
+  date?: string;
 }
 
 const LOG_ICONS: Record<DayLogType, { icon: string; label: string }> = {
@@ -27,12 +28,13 @@ export function ChildCardMock({
   attendance,
   logTypes,
   groupId,
+  date,
 }: ChildCardMockProps) {
   const isPresent = attendance?.status === "present";
   const isAbsent = attendance?.status === "absent";
   const childLogHref = groupId
-    ? `/prototype/child-log/${child.id}?group=${groupId}`
-    : `/prototype/child-log/${child.id}`;
+    ? `/prototype/child-log/${child.id}?group=${groupId}${date ? `&date=${date}` : ""}`
+    : `/prototype/child-log/${child.id}${date ? `?date=${date}` : ""}`;
 
   return (
     <Link href={childLogHref}>
