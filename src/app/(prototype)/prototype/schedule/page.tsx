@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { mockSchedule, mockChildren } from "@/lib/mock";
 import { DaySwitcherMock } from "@/components/prototype/DaySwitcherMock";
@@ -10,7 +11,7 @@ import { usePrototype } from "@/context/PrototypeContext";
 
 const TODAY = PROTOTYPE_TODAY;
 
-export default function PrototypeSchedulePage() {
+function PrototypeScheduleContent() {
   const searchParams = useSearchParams();
   const { getDailyPresenceStatus } = usePrototype();
   const selectedDate = clampToCalendarWindow(searchParams.get("date") ?? TODAY);
@@ -78,5 +79,13 @@ export default function PrototypeSchedulePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function PrototypeSchedulePage() {
+  return (
+    <Suspense fallback={<main className="mx-auto max-w-2xl px-4 pb-8 pt-4 md:max-w-4xl lg:max-w-6xl">Lade Tagesablauf...</main>}>
+      <PrototypeScheduleContent />
+    </Suspense>
   );
 }

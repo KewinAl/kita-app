@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { EntgegennehmenMock } from "@/components/prototype/EntgegennehmenMock";
 
 export default async function PrototypeCheckInPage({
@@ -10,7 +11,9 @@ export default async function PrototypeCheckInPage({
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-8 pt-4 md:max-w-4xl lg:max-w-6xl">
-      <EntgegennehmenMock groupId={groupId} />
+      <Suspense fallback={<div className="text-sm text-muted-foreground">Lade Check-in...</div>}>
+        <EntgegennehmenMock groupId={groupId} />
+      </Suspense>
     </main>
   );
 }
