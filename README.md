@@ -15,6 +15,30 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) and click **View Prototype** to see the staff group overview mockup.
 
+## Work Session Commands (Agent-Friendly)
+
+Use these commands so common workflows are one-liners:
+
+```bash
+npm run wf:sync
+npm run wf:dev
+npm run wf:dev:update
+npm run wf:update:deps
+npm run wf:update:system
+npm run wf:verify
+npm run wf:verify:build
+```
+
+What they do:
+
+- `wf:sync`: fetches remote and reports ahead/behind/diverged state
+- `wf:dev`: checks git sync and starts dev server
+- `wf:dev:update`: checks git sync, updates deps, starts dev server
+- `wf:update:deps`: runs `npm outdated` then `npm update`
+- `wf:update:system`: runs `winget upgrade --all` and updates npm CLI
+- `wf:verify`: runs lint checks
+- `wf:verify:build`: runs lint and production build
+
 ## Phase 0 (Done)
 
 - Next.js 15 + Tailwind + shadcn/ui scaffold

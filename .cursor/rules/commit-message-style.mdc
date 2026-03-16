@@ -1,0 +1,23 @@
+---
+description: Enforce consistent conventional commit messages
+alwaysApply: true
+---
+
+# Commit Message Style
+
+Use conventional commit format for every commit in this repo.
+
+- Subject line format: `<type>(<scope>): <summary>`
+- Allowed types: `feat`, `fix`, `refactor`, `docs`, `chore`, `test`
+- Keep summary concise, present tense, and under ~72 chars when possible.
+- Scope should reflect the touched area (for example: `prototype`, `deploy`, `auth`, `ui`, `docs`).
+- Add a short body only when needed, focused on **why** (not just file lists).
+
+## Examples
+
+```text
+feat(prototype): add role-based route guard for lead pages
+fix(deploy): clear stale Next.js cache handling on startup
+docs(plan): add follow-up TODO notes for staffing workflows
+chore(git): standardize commit and push workflow
+```

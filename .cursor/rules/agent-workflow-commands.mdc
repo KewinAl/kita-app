@@ -1,0 +1,28 @@
+---
+description: Prefer workflow npm commands over manual shell usage
+alwaysApply: true
+---
+
+# Agent Workflow Commands
+
+For common operations, prefer `npm run` workflow commands instead of ad-hoc shell:
+
+- `npm run wf:sync`: fetch + branch sync status
+- `npm run wf:dev`: sync check, then start dev server
+- `npm run wf:dev:update`: sync check, deps update, then dev server
+- `npm run wf:update:deps`: project dependency update
+- `npm run wf:update:system`: Windows/toolchain update routine
+- `npm run wf:verify`: lint checks
+- `npm run wf:verify:build`: lint + production build
+
+When users ask for frequent developer tasks, run these commands first unless they ask for a custom command.
+
+## Command Typo Autocorrect
+
+When a user provides a command with an obvious typo, auto-correct and run the intended command without asking first.
+
+- Example: `npm run wf:synch` -> `npm run wf:sync`
+- Confirm what was corrected in a short follow-up message.
+- Ask a clarifying question only when:
+  - multiple valid corrections exist, or
+  - provided flags/parameters are invalid, risky, or ambiguous.

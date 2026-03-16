@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "wf:sync": "powershell -ExecutionPolicy Bypass -File ./scripts/git-sync-check.ps1",
+    "wf:dev": "powershell -ExecutionPolicy Bypass -File ./scripts/start-worksession.ps1",
+    "wf:dev:update": "powershell -ExecutionPolicy Bypass -File ./scripts/start-worksession.ps1 -UpdateDeps",
+    "wf:update:deps": "powershell -ExecutionPolicy Bypass -File ./scripts/project-update.ps1",
+    "wf:update:system": "powershell -ExecutionPolicy Bypass -File ./scripts/system-update.ps1",
+    "wf:verify": "powershell -ExecutionPolicy Bypass -File ./scripts/verify-workflow.ps1",
+    "wf:verify:build": "powershell -ExecutionPolicy Bypass -File ./scripts/verify-workflow.ps1 -Build"
   },
   "dependencies": {
     "next": "^15.0.0",

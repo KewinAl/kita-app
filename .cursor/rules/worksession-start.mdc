@@ -1,0 +1,24 @@
+---
+description: Fast work session startup and hygiene workflow
+alwaysApply: true
+---
+
+# Work Session Startup
+
+When asked to start a coding session, follow this sequence:
+
+1. Verify repository status and branch sync:
+   - Run `git fetch --prune`
+   - Run `git status -sb`
+   - If an upstream branch exists, run `git rev-list --left-right --count @{u}...HEAD`
+   - Explain whether local is ahead/behind/diverged/in sync
+2. Use project scripts from `package.json` and lockfile manager defaults.
+   - For this repo, use `npm` commands and `npm run dev` for the dev server.
+3. For software updates, ask whether the user wants:
+   - Project dependencies only (`npm outdated`, `npm update`)
+   - Toolchain/system updates (for example `npm i -g npm@latest` or `winget upgrade --all`)
+4. Prefer one-command automation when possible (PowerShell script in `scripts/`).
+5. Keep startup responses concise and action-oriented:
+   - Show exact commands
+   - Include quick verification steps
+   - Avoid long explanations unless asked

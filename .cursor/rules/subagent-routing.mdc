@@ -1,0 +1,17 @@
+---
+description: Quick subagent routing for faster execution
+alwaysApply: true
+---
+
+# Subagent Routing
+
+When a task can be parallelized, use subagents with short, explicit prompts:
+
+- Use `explore` for codebase discovery and impact scans.
+- Use `shell` for command-heavy work (git checks, installs, test runs).
+- Use `browser-use` for UI verification in the running app.
+- Use up to 3 subagents in parallel for independent tasks.
+- Return concise outputs:
+  - key result
+  - affected files/commands
+  - blockers (if any)
