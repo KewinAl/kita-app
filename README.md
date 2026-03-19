@@ -15,6 +15,22 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) and click **View Prototype** to see the staff group overview mockup.
 
+## Backend (Supabase + Prisma)
+
+The product plan uses **PostgreSQL (Supabase)**, **Prisma**, **Supabase Auth**, and **Storage**. The app runs **without** these for local UI work; when you are ready:
+
+1. Copy [.env.example](.env.example) to `.env.local` and fill in Supabase + `DATABASE_URL`.
+2. Apply schema and seed:
+
+   ```bash
+   npm run db:push
+   npm run db:seed
+   ```
+
+3. Optional: require login for `/prototype` by setting `NEXT_PUBLIC_REQUIRE_AUTH=true`, then use [/login](/login) (magic link or password).
+
+Full deploy steps: [docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## Work Session Commands (Agent-Friendly)
 
 Use these commands so common workflows are one-liners:
@@ -62,4 +78,9 @@ src/
     ui/                      # shadcn/ui
   lib/
     mock/                    # Fake data for prototype
+    db/                      # Prisma client singleton
+    supabase/                # Supabase browser/server helpers
+prisma/
+  schema.prisma              # Database schema
+  seed.ts                    # Demo seed data
 ```

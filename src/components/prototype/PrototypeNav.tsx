@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { mockGroups } from "@/lib/mock";
+import { mockGroups, mockParentAccounts } from "@/lib/mock";
 import { usePrototypeAuth } from "@/context/PrototypeAuthContext";
 import { usePrototypeTheme } from "@/context/PrototypeThemeContext";
 import {
@@ -32,7 +32,7 @@ export function PrototypeNav() {
   const searchParams = useSearchParams();
   const groupId = searchParams.get("group") ?? mockGroups[0]?.id ?? "g1";
   const date = searchParams.get("date");
-  const { role, setRole } = usePrototypeAuth();
+  const { role, setRole, parentAccountId, setParentAccountId } = usePrototypeAuth();
   const { orgThemes, selectedOrgId, setSelectedOrgId } = usePrototypeTheme();
 
   return (
@@ -67,6 +67,20 @@ export function PrototypeNav() {
           </option>
         ))}
       </select>
+      {role === "parent" && (
+        <select
+          value={parentAccountId}
+          onChange={(e) => setParentAccountId(e.target.value)}
+          className="h-8 rounded border bg-background px-2 text-xs text-foreground"
+          aria-label="Elternkonto auswählen"
+        >
+          {mockParentAccounts.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.name}
+            </option>
+          ))}
+        </select>
+      )}
       <span className="text-muted-foreground/50">|</span>
       {NAV_ITEMS.filter(({ href }) => canAccessRoute(role, href)).map(({ href, label }) => {
         const isGroupPage =

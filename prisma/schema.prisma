@@ -1,0 +1,170 @@
+// Core schema aligned with docs/PLAN.md (Organization → Location → Group → Child).
+// IDs for seeded demo data match existing mock ids (g1, c1, …) for easier UI migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppRole {
+  technical_support
+  org_admin
+  kita_lead
+  general_staff
+  parent
+}
+
+enum DaySchedule {
+  full
+  morning
+  morning_lunch
+  afternoon
+  lunch_afternoon
+}
+
+enum StaffRole {
+  KL
+  GL
+  Miterzieher
+  Lernende
+  Praktikant
+}
+
+enum DayLogType {
+  meal
+  nap
+  activity
+  incident
+  photo
+  note
+}
+
+model Organization {
+  id        String         @id
+  name      String
+  slug      String         @unique
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  locations KitaLocation[]
+  profiles  Profile[]
+}
+
+model KitaLocation {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  groups         KitaGroup[]
+  staff          Staff[]
+}
+
+model KitaGroup {
+  id         String       @id
+  locationId String
+  location   KitaLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  name       String
+  sortOrder  Int          @default(0)
+  children   Child[]
+}
+
+model Child {
+  id            String        @id
+  firstName     String
+  lastName      String
+  dateOfBirth   String
+  groupId       String
+  group         KitaGroup     @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  daySchedule   DaySchedule?
+  daysPresent   Json?
+  absentDates   Json?
+  extraPresence Json?
+  profile       ChildProfile?
+  attendance    AttendanceRecord[]
+  dayLogEntries DayLogEntry[]
+  parentLinks   ParentChildLink[]
+}
+
+model ChildProfile {
+  childId          String  @id
+  child            Child   @relation(fields: [childId], references: [id], onDelete: Cascade)
+  allergies        String?
+  medicalInfo      String?
+  emergencyContacts Json?
+  parentName       String?
+  emergencyNumber  String?
+}
+
+model Staff {
+  id             String    @id
+  userId         String?   @unique @db.Uuid
+  locationId     String
+  location       KitaLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  primaryGroupId String?
+  name           String
+  role           StaffRole
+  dayLogEntries  DayLogEntry[]
+}
+
+/// Maps Supabase auth users to app role and organization (RLS-friendly profile row).
+model Profile {
+  id             String       @id @db.Uuid
+  email          String?
+  role           AppRole      @default(general_staff)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  parentLinks    ParentChildLink[]
+}
+
+model ParentChildLink {
+  id        String  @id @default(cuid())
+  profileId String  @db.Uuid
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  childId   String
+  child     Child   @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, childId])
+}
+
+model AttendanceRecord {
+  id           String   @id @default(cuid())
+  childId      String
+  child        Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  /// ISO date YYYY-MM-DD
+  date         String
+  checkInTime  String?
+  checkOutTime String?
+  pickedUpBy   String?
+  /// expected | present | absent_today | planned_absence (prototype parity)
+  status       String?
+
+  @@unique([childId, date])
+  @@index([date])
+}
+
+model DayLogEntry {
+  id        String      @id @default(cuid())
+  childId   String
+  child     Child       @relation(fields: [childId], references: [id], onDelete: Cascade)
+  staffId   String?
+  staff     Staff?      @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  /// ISO date YYYY-MM-DD
+  date      String
+  type      DayLogType
+  data      Json?
+  createdAt DateTime?
+  photo     LogPhoto?
+}
+
+model LogPhoto {
+  id            String      @id @default(cuid())
+  dayLogEntryId String      @unique
+  dayLogEntry   DayLogEntry @relation(fields: [dayLogEntryId], references: [id], onDelete: Cascade)
+  storagePath   String
+  createdAt     DateTime    @default(now())
+}

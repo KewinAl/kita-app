@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { mockGroups, mockStaff, type Staff } from "@/lib/mock";
 import {
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 type ShiftCode = "1" | "2" | "3" | "4" | "5" | "6" | "SCHULE" | "FREI" | "EMPTY";
 type WeekdayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+type StaffSortMode = "custom" | "name" | "role" | "group";
 
 type ShiftDefinition = {
   code: "1" | "2" | "3" | "4" | "5" | "6";
@@ -212,7 +213,22 @@ export function ShiftPlannerMock() {
   const { children, shiftDisplayFormat, getShiftOverride, setShiftOverride } =
     usePrototypeLead();
   const [isEditMode, setIsEditMode] = useState(false);
+  const [staffSortMode, setStaffSortMode] = useState<StaffSortMode>("custom");
+  const [staffOrder, setStaffOrder] = useState<string[]>(() => mockStaff.map((staff) => staff.id));
   const canManagePlan = role === "kita_lead" || role === "org_admin";
+
+  useEffect(() => {
+    setStaffOrder((prev) => {
+      const known = new Set(prev);
+      const next = [...prev];
+      mockStaff.forEach((staff) => {
+        if (!known.has(staff.id)) {
+          next.push(staff.id);
+        }
+      });
+      return next.filter((id) => mockStaff.some((staff) => staff.id === id));
+    });
+  }, []);
 
   const monthInfo = useMemo(() => {
     const base = parseDateKey(selectedDate);
@@ -258,6 +274,44 @@ export function ShiftPlannerMock() {
     return shiftCodeForStaff(staff, day.weekday);
   };
 
+  const displayedStaff = useMemo(() => {
+    const byId = new Map(mockStaff.map((staff) => [staff.id, staff]));
+    const customOrder = staffOrder
+      .map((id) => byId.get(id))
+      .filter((staff): staff is Staff => Boolean(staff));
+    const missingStaff = mockStaff.filter((staff) => !staffOrder.includes(staff.id));
+    const base = [...customOrder, ...missingStaff];
+    if (staffSortMode === "custom") return base;
+    const sorted = [...base];
+    sorted.sort((a, b) => {
+      if (staffSortMode === "name") {
+        return a.name.localeCompare(b.name, "de-CH");
+      }
+      if (staffSortMode === "role") {
+        const roleCompare = a.role.localeCompare(b.role, "de-CH");
+        if (roleCompare !== 0) return roleCompare;
+        return a.name.localeCompare(b.name, "de-CH");
+      }
+      const groupA = a.primaryGroupId ?? "zz-support";
+      const groupB = b.primaryGroupId ?? "zz-support";
+      const groupCompare = groupA.localeCompare(groupB, "de-CH");
+      if (groupCompare !== 0) return groupCompare;
+      return a.name.localeCompare(b.name, "de-CH");
+    });
+    return sorted;
+  }, [staffOrder, staffSortMode]);
+
+  const moveDisplayedStaff = (displayedIndex: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? displayedIndex - 1 : displayedIndex + 1;
+    if (targetIndex < 0 || targetIndex >= displayedStaff.length) return;
+    const next = [...displayedStaff];
+    const tmp = next[displayedIndex];
+    next[displayedIndex] = next[targetIndex];
+    next[targetIndex] = tmp;
+    setStaffSortMode("custom");
+    setStaffOrder(next.map((staff) => staff.id));
+  };
+
   return (
     <main className="mx-auto w-full max-w-none px-2 py-4">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -268,6 +322,28 @@ export function ShiftPlannerMock() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1 text-xs text-muted-foreground">
+            Sortierung
+            <select
+              value={staffSortMode}
+              onChange={(e) => setStaffSortMode(e.target.value as StaffSortMode)}
+              className="h-7 rounded border bg-background px-2 text-xs text-foreground"
+            >
+              <option value="custom">Manuell</option>
+              <option value="name">Name A-Z</option>
+              <option value="role">Rolle</option>
+              <option value="group">Gruppe</option>
+            </select>
+          </label>
+          {staffSortMode === "custom" ? (
+            <button
+              type="button"
+              onClick={() => setStaffOrder(mockStaff.map((staff) => staff.id))}
+              className="rounded border px-2 py-1 text-sm"
+            >
+              Reihenfolge zurücksetzen
+            </button>
+          ) : null}
           {canManagePlan ? (
             <>
               <button
@@ -293,26 +369,66 @@ export function ShiftPlannerMock() {
         <table className="w-full table-fixed border-collapse text-xs">
           <thead>
             <tr className="border-b bg-muted/40">
-              <th className="sticky left-0 z-10 w-28 bg-muted/40 px-1 py-1 text-left font-medium">
+              <th className="sticky left-0 z-10 w-32 bg-muted/40 px-1 py-1 text-left font-medium">
                 Mitarbeitende
               </th>
               {monthInfo.days.map((day) => (
-                <th key={day.dateKey} className="px-0 py-0.5 text-center font-medium">
+                <th
+                  key={day.dateKey}
+                  className={cn(
+                    "px-0 py-0.5 text-center font-medium",
+                    day.dateKey === PROTOTYPE_TODAY && "bg-emerald-100/60"
+                  )}
+                >
                   <div className="leading-tight">
                     <div>{day.dayLabel}</div>
-                    <div className="text-[9px] text-muted-foreground">
+                    <div
+                      className={cn(
+                        "text-[9px] text-muted-foreground",
+                        day.dateKey === PROTOTYPE_TODAY && "font-semibold text-emerald-700"
+                      )}
+                    >
                       {WEEK_DAYS.find((d) => d.key === day.weekday)?.label}
                     </div>
+                    {day.dateKey === PROTOTYPE_TODAY ? (
+                      <div className="text-[8px] font-semibold uppercase tracking-wide text-emerald-700">
+                        Heute
+                      </div>
+                    ) : null}
                   </div>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {mockStaff.map((staff) => (
+            {displayedStaff.map((staff, staffIndex) => (
               <tr key={staff.id} className="border-b last:border-0">
                 <td className="sticky left-0 z-10 bg-background px-1.5 py-0.5">
-                  <p className="truncate text-xs font-medium">{staff.name}</p>
+                  <div className="flex items-start justify-between gap-1">
+                    <p className="truncate text-xs font-medium">{staff.name}</p>
+                    {canManagePlan ? (
+                      <div className="flex shrink-0 items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => moveDisplayedStaff(staffIndex, "up")}
+                          disabled={staffIndex === 0}
+                          title="Nach oben verschieben"
+                          className="rounded border px-1 text-[9px] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveDisplayedStaff(staffIndex, "down")}
+                          disabled={staffIndex === displayedStaff.length - 1}
+                          title="Nach unten verschieben"
+                          className="rounded border px-1 text-[9px] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                   <p className="truncate text-[9px] text-muted-foreground">
                     {staff.role} · {staff.primaryGroupId ?? "kitaweit"}
                   </p>
@@ -325,7 +441,13 @@ export function ShiftPlannerMock() {
                       ? supportGroupFor(staff.id, day.weekday)
                       : null;
                   return (
-                    <td key={`${staff.id}-${day.dateKey}`} className="px-0 py-0.5 text-center align-top">
+                    <td
+                      key={`${staff.id}-${day.dateKey}`}
+                      className={cn(
+                        "px-0 py-0.5 text-center align-top",
+                        day.dateKey === PROTOTYPE_TODAY && "bg-emerald-50/70"
+                      )}
+                    >
                       {canManagePlan && isEditMode ? (
                         <select
                           value={code === "EMPTY" ? "" : code}
@@ -380,9 +502,16 @@ export function ShiftPlannerMock() {
             {monthInfo.days
               .filter((day) => day.weekday !== "sat" && day.weekday !== "sun")
               .map((day) => (
-            <article key={day.dateKey} className="rounded-lg border bg-background p-2">
+            <article
+              key={day.dateKey}
+              className={cn(
+                "rounded-lg border bg-background p-2",
+                day.dateKey === PROTOTYPE_TODAY && "border-emerald-400 bg-emerald-50/60"
+              )}
+            >
               <p className="text-xs font-semibold text-muted-foreground">
                 {day.dateKey} ({WEEK_DAYS.find((d) => d.key === day.weekday)?.label})
+                {day.dateKey === PROTOTYPE_TODAY ? " - Heute" : ""}
               </p>
               <div className="mt-1 space-y-1.5">
                 {mockGroups.map((group) => {
