@@ -17,6 +17,16 @@ For common operations, prefer `npm run` workflow commands instead of ad-hoc shel
 
 When users ask for frequent developer tasks, run these commands first unless they ask for a custom command.
 
+## Git remote operations (workflow integrity)
+
+Commands that change or align with the remote (`git push`, `git pull`, `git fetch` alone as “sync”, merge/rebase from `origin`, force-push, etc.) **must not** be executed as the very first step.
+
+1. Run `npm run wf:sync` first (or the equivalent checks from **Work Session Startup**: `git fetch --prune`, `git status -sb`, and ahead/behind vs `@{u}` when an upstream exists).
+2. In the reply, **call out** anything risky or inconsistent: behind upstream, diverged history, dirty or uncommitted changes, or pushing when the user might expect uncommitted files to be included.
+3. If checks recommend a different order (for example pull/rebase before push), say so and only continue with the user’s exact command after that warning — or after they explicitly ask to skip checks (“just run git push”).
+
+This applies even when the user types only `git push` or `git pull`: workflow integrity comes before blind obedience to the literal instruction.
+
 ## Command Typo Autocorrect
 
 When a user provides a command with an obvious typo, auto-correct and run the intended command without asking first.

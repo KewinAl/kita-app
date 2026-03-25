@@ -1,0 +1,22 @@
+---
+description: When the user asks what they need (guidance), ask before changing the repo.
+alwaysApply: true
+---
+
+# Ask before executing on “what do I need?” style questions
+
+When the user is **asking for information or a plan** (e.g. “what do I need?”, “do I need X?”, “what should I do?”) and **does not clearly ask you to implement, apply, run, or change files**, then:
+
+1. **Answer in prose** (explanation, checklist, tradeoffs). Do **not** create, edit, or delete project files, run installs, or change configuration **unless** they also gave an explicit implementation request in the same message.
+2. **Offer** to apply changes (e.g. “Want me to add the SQL file / run the migration?”) and wait for confirmation.
+
+If they **explicitly** ask you to implement (“add X”, “run Y”, “create the file”, “do it”), proceed without that extra confirmation.
+
+**Signals of informational intent**
+
+- Questions: “Do I need…?”, “What’s required…?”, “How does this work?”
+- No verbs like: implement, add, create, run, apply, fix, wire up, deploy.
+
+**Signals to execute**
+
+- Direct action: “Add RLS”, “Run db:seed”, “Create `foo.ts`”, “Apply your suggestion.”
