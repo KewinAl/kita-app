@@ -1,17 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
-import { mockGroups } from "@/lib/mock";
-import { DaySchedule } from "@/lib/mock/children";
+import { DAY_SCHEDULE_LABELS, mockGroups, type DaySchedule } from "@/lib/mock";
 import { usePrototypeLead } from "@/context/PrototypeLeadContext";
 
-const DAY_SCHEDULE_OPTIONS: { value: DaySchedule; label: string }[] = [
-  { value: "full", label: "Ganztag" },
-  { value: "morning", label: "Vormittag" },
-  { value: "morning_lunch", label: "Vormittag + Mittag" },
-  { value: "afternoon", label: "Nachmittag" },
-  { value: "lunch_afternoon", label: "Mittag + Nachmittag" },
-];
+const DAY_SCHEDULE_OPTIONS = (Object.entries(DAY_SCHEDULE_LABELS) as [DaySchedule, string][]).map(
+  ([value, label]) => ({ value, label })
+);
 
 export function KidsManagementMock() {
   const { children, archivedChildren, addChild, updateChild, setChildArchived } =
@@ -36,10 +32,28 @@ export function KidsManagementMock() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      <h1 className="text-xl font-semibold">Kinderverwaltung</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Personendaten anpassen, neue Kinder erfassen und bestehende archivieren.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold">Kinderverwaltung</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Personendaten anpassen, neue Kinder erfassen und bestehende archivieren.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/prototype/kids"
+            className="rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted"
+          >
+            Kinder-Übersicht
+          </Link>
+          <Link
+            href="/prototype/lead/kids/check"
+            className="rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted"
+          >
+            Daten-Check
+          </Link>
+        </div>
+      </div>
 
       <section className="mt-4 rounded-lg border bg-background p-3">
         <h2 className="text-sm font-medium">Neues Kind erfassen</h2>

@@ -35,28 +35,38 @@ export default function PrototypeIndexPage() {
       routeCheck: "/prototype/parent",
     },
     {
+      href: "/prototype/kids",
+      label: "Kinder (Übersicht Stammdaten)",
+      routeCheck: "/prototype/kids",
+    },
+    {
       href: `/prototype/lead/shifts?date=${PROTOTYPE_TODAY}`,
-      label: "Leitung · Dienste",
+      label: "Dienste",
       routeCheck: "/prototype/lead/shifts",
     },
     {
       href: "/prototype/lead/appointments",
-      label: "Leitung · Termine",
+      label: "Termine",
       routeCheck: "/prototype/lead/appointments",
     },
     {
       href: "/prototype/lead/documents",
-      label: "Leitung · Dokumente",
+      label: "Dokumente",
       routeCheck: "/prototype/lead/documents",
     },
     {
       href: "/prototype/lead/kids",
-      label: "Leitung · Kinder",
+      label: "Kinderverwaltung",
       routeCheck: "/prototype/lead/kids",
     },
     {
+      href: "/prototype/lead/kids/check",
+      label: "Daten-Check (Stammdaten)",
+      routeCheck: "/prototype/lead/kids/check",
+    },
+    {
       href: "/prototype/lead/settings",
-      label: "Leitung · Einstellungen",
+      label: "Einstellungen",
       routeCheck: "/prototype/lead/settings",
     },
   ];

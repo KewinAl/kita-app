@@ -24,14 +24,46 @@ export function isStaffRole(role: PrototypeRole) {
   return STAFF_ROLES.includes(role);
 }
 
+/** Leitung / Verwaltung: administrative Bereiche der Prototyp-Navigation. */
+export function isLeadAdminRole(role: PrototypeRole) {
+  return role === "kita_lead" || role === "org_admin";
+}
+
+/** Tabs, die nur für Leitung/Verwaltung gedacht sind (visuell hervorgehoben). */
+export function isLeadAdminNavHref(href: string) {
+  return (
+    href === "/prototype/lead/appointments" ||
+    href === "/prototype/lead/documents" ||
+    href === "/prototype/lead/kids" ||
+    href === "/prototype/lead/settings"
+  );
+}
+
 export function canAccessRoute(role: PrototypeRole, pathname: string) {
   if (pathname === "/prototype") return true;
   if (pathname.startsWith("/prototype/parent")) return role === "parent";
+
+  if (pathname === "/prototype/kids" || pathname.startsWith("/prototype/kids/")) {
+    return isStaffRole(role);
+  }
+
   if (pathname.startsWith("/prototype/lead/shifts")) {
     return isStaffRole(role);
   }
+
+  if (
+    pathname === "/prototype/lead/kids/check" ||
+    pathname.startsWith("/prototype/lead/kids/check/")
+  ) {
+    return isStaffRole(role);
+  }
+
+  if (pathname === "/prototype/lead/kids") {
+    return isLeadAdminRole(role);
+  }
+
   if (pathname.startsWith("/prototype/lead")) {
-    return role === "kita_lead" || role === "org_admin";
+    return isLeadAdminRole(role);
   }
   if (
     pathname.startsWith("/prototype/group") ||

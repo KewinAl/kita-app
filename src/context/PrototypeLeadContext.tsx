@@ -1,7 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useMemo, useState } from "react";
-import { mockChildren, mockGroups, mockStaff } from "@/lib/mock";
+import {
+  mockChildren,
+  mockGroups,
+  mockStaff,
+  type ChildCareProfile,
+  emptyChildCareProfile,
+  initialChildProfilesMap,
+} from "@/lib/mock";
 import { Child } from "@/lib/mock/children";
 import { DEFAULT_SPOTS_PER_STAFF } from "@/lib/staffingRules";
 import { getCalendarWindow } from "@/lib/prototypeCalendar";
@@ -69,6 +76,9 @@ interface PrototypeLeadContextValue {
   addChild: (input: Omit<Child, "id">) => void;
   updateChild: (childId: string, data: Partial<Omit<Child, "id">>) => void;
   setChildArchived: (childId: string, archived: boolean) => void;
+  childProfilesById: Record<string, ChildCareProfile>;
+  getChildProfile: (childId: string) => ChildCareProfile;
+  updateChildProfile: (childId: string, data: Partial<ChildCareProfile>) => void;
   spotsPerStaff: number;
   setSpotsPerStaff: (value: number) => void;
   staffingRuleSwitches: StaffingRuleSwitches;
@@ -161,6 +171,9 @@ const INITIAL_FEATURE_FLAGS: FeatureFlags = {
 export function PrototypeLeadProvider({ children }: { children: React.ReactNode }) {
   const [allChildren, setAllChildren] = useState<Child[]>(mockChildren);
   const [archivedChildIds, setArchivedChildIds] = useState<string[]>([]);
+  const [childProfilesById, setChildProfilesById] = useState<
+    Record<string, ChildCareProfile>
+  >(() => initialChildProfilesMap(mockChildren.map((c) => c.id)));
   const [spotsPerStaff, setSpotsPerStaffState] = useState<number>(DEFAULT_SPOTS_PER_STAFF);
   const [staffingRuleSwitches, setStaffingRuleSwitches] = useState<StaffingRuleSwitches>(
     INITIAL_STAFFING_SWITCHES
@@ -218,7 +231,9 @@ export function PrototypeLeadProvider({ children }: { children: React.ReactNode 
   };
 
   const addChild = (input: Omit<Child, "id">) => {
-    setAllChildren((prev) => [...prev, { id: crypto.randomUUID(), ...input }]);
+    const id = crypto.randomUUID();
+    setAllChildren((prev) => [...prev, { id, ...input }]);
+    setChildProfilesById((prev) => ({ ...prev, [id]: emptyChildCareProfile() }));
   };
 
   const updateChild = (childId: string, data: Partial<Omit<Child, "id">>) => {
@@ -234,6 +249,16 @@ export function PrototypeLeadProvider({ children }: { children: React.ReactNode 
       if (!archived && hasId) return prev.filter((id) => id !== childId);
       return prev;
     });
+  };
+
+  const getChildProfile = (childId: string) =>
+    childProfilesById[childId] ?? emptyChildCareProfile();
+
+  const updateChildProfile = (childId: string, data: Partial<ChildCareProfile>) => {
+    setChildProfilesById((prev) => ({
+      ...prev,
+      [childId]: { ...emptyChildCareProfile(), ...prev[childId], ...data },
+    }));
   };
 
   const getAssignedStaffIds = (date: string, block: ShiftBlock, groupId: string) =>
@@ -309,6 +334,9 @@ export function PrototypeLeadProvider({ children }: { children: React.ReactNode 
       addChild,
       updateChild,
       setChildArchived,
+      childProfilesById,
+      getChildProfile,
+      updateChildProfile,
       spotsPerStaff,
       setSpotsPerStaff,
       staffingRuleSwitches,
@@ -333,6 +361,7 @@ export function PrototypeLeadProvider({ children }: { children: React.ReactNode 
     [
       allChildren,
       archivedChildIds,
+      childProfilesById,
       appointments,
       assignmentsByDate,
       calendarWindowDays,

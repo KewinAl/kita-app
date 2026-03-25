@@ -9,6 +9,8 @@ import { usePrototypeTheme } from "@/context/PrototypeThemeContext";
 import {
   ROLE_LABELS,
   canAccessRoute,
+  isLeadAdminNavHref,
+  isLeadAdminRole,
   isStaffRole,
   type PrototypeRole,
 } from "@/lib/permissions/prototypeAccess";
@@ -19,13 +21,17 @@ const NAV_ITEMS = [
   { href: "/prototype/check-in", label: "Entgegennehmen" },
   { href: "/prototype/check-out", label: "Abgeben" },
   { href: "/prototype/ablauf", label: "Ablauf" },
-  { href: "/prototype/lead/shifts", label: "Leitung · Dienste" },
-  { href: "/prototype/lead/appointments", label: "Leitung · Termine" },
-  { href: "/prototype/lead/documents", label: "Leitung · Dokumente" },
-  { href: "/prototype/lead/kids", label: "Leitung · Kinder" },
-  { href: "/prototype/lead/settings", label: "Leitung · Einstellungen" },
+  { href: "/prototype/kids", label: "Kinder" },
+  { href: "/prototype/lead/shifts", label: "Dienste" },
+  { href: "/prototype/lead/appointments", label: "Termine" },
+  { href: "/prototype/lead/documents", label: "Dokumente" },
+  { href: "/prototype/lead/kids", label: "Kinderverwaltung" },
+  { href: "/prototype/lead/settings", label: "Einstellungen" },
   { href: "/prototype/parent", label: "Elternansicht" },
 ] as const;
+
+const LEAD_ADMIN_TAB_SURFACE_INACTIVE =
+  "bg-amber-500/15 text-foreground hover:bg-amber-500/25 dark:bg-amber-400/10 dark:hover:bg-amber-400/[0.18]";
 
 export function PrototypeNav() {
   const pathname = usePathname();
@@ -102,6 +108,8 @@ export function PrototypeNav() {
           (href === "/prototype/group" &&
             pathname?.startsWith("/prototype/incident")) ||
           (href === "/prototype/group" && pathname?.startsWith("/prototype/photo")) ||
+          (href === "/prototype/kids" &&
+            (pathname === "/prototype/kids" || pathname?.startsWith("/prototype/kids/"))) ||
           (href === "/prototype/lead/shifts" &&
             pathname?.startsWith("/prototype/lead/shifts")) ||
           (href === "/prototype/lead/appointments" &&
@@ -109,9 +117,13 @@ export function PrototypeNav() {
           (href === "/prototype/lead/documents" &&
             pathname?.startsWith("/prototype/lead/documents")) ||
           (href === "/prototype/lead/kids" &&
-            pathname?.startsWith("/prototype/lead/kids")) ||
+            pathname?.startsWith("/prototype/lead/kids") &&
+            pathname !== "/prototype/lead/kids/check") ||
           (href === "/prototype/lead/settings" &&
             pathname?.startsWith("/prototype/lead/settings"));
+
+        const showLeadAdminSurface =
+          isLeadAdminRole(role) && isLeadAdminNavHref(href) && !isActive;
 
         return (
           <Link
@@ -121,7 +133,9 @@ export function PrototypeNav() {
               "rounded px-2 py-1.5 text-sm font-medium transition-colors",
               isActive
                 ? ACTIVE_SOLID_INDICATOR_CLASS
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                : showLeadAdminSurface
+                  ? LEAD_ADMIN_TAB_SURFACE_INACTIVE
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
             {label}

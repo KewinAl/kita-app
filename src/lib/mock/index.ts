@@ -1,4 +1,19 @@
-export { mockChildren, type Child, type DaySchedule } from "./children";
+export {
+  mockChildren,
+  DAY_SCHEDULE_LABELS,
+  dayScheduleLabel,
+  type Child,
+  type DaySchedule,
+} from "./children";
+export {
+  emptyChildCareProfile,
+  initialChildProfilesMap,
+  stammdatenComplete,
+  healthComplete,
+  emergencyComplete,
+  sleepComplete,
+  type ChildCareProfile,
+} from "./childProfile";
 export { mockAttendance, type AttendanceRecord, type AttendanceStatus } from "./attendance";
 export {
   mockDayLogEntries,

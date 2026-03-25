@@ -5,6 +5,18 @@ export type DaySchedule =
   | "afternoon"
   | "lunch_afternoon";
 
+export const DAY_SCHEDULE_LABELS: Record<DaySchedule, string> = {
+  full: "Ganztag",
+  morning: "Vormittag",
+  morning_lunch: "Vormittag + Mittag",
+  afternoon: "Nachmittag",
+  lunch_afternoon: "Mittag + Nachmittag",
+};
+
+export function dayScheduleLabel(schedule?: DaySchedule) {
+  return schedule ? DAY_SCHEDULE_LABELS[schedule] : "—";
+}
+
 export interface Child {
   id: string;
   firstName: string;

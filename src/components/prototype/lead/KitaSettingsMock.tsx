@@ -117,7 +117,7 @@ export function KitaSettingsMock() {
         <h2 className="text-sm font-medium">Role/Access Konfiguration (Read-only Placeholder)</h2>
         <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
           <li>`parent`: nur eigene Kinddaten und freigegebene Inhalte</li>
-          <li>`general_staff`: operative Tagesabläufe</li>
+          <li>`general_staff`: operative Tagesabläufe inkl. Kinderverwaltung &amp; Kinderdaten-Check</li>
           <li>`kita_lead`: operative + leitungsbezogene Module</li>
           <li>`org_admin`: vollständige Organisationsverwaltung</li>
           <li>`technical_support`: Supportzugriff mit späterem Audit/Policy-Flow</li>
