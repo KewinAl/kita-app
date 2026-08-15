@@ -1,7 +1,9 @@
 /**
  * Mock “backend” seed shaped like Prisma AttendanceRecord / DayLogEntry / meal plans.
- * Opening day 2026-08-03 starts empty; past 2 weeks (Mon–Fri) are filled;
- * next week has group meal plans only (no per-child logs, no Ablauf tasks).
+ *
+ * - Keeps July history (20.–31.7.2026 Mon–Fri)
+ * - Fills opening through today (3.8.–14.8.2026 Mon–Fri) with sleep / activities / food / Ablauf
+ * - Days after PROTOTYPE_TODAY stay empty
  */
 
 import { mockChildren, type Child } from "./children";
@@ -16,9 +18,9 @@ import type {
   NapData,
 } from "./dayLogEntries";
 import {
+  OPENING_DAY,
   PROTOTYPE_TODAY,
-  getHistoryWeekdays,
-  getNextWeekWeekdays,
+  getFilledWeekdays,
   getSeededDateKeys,
 } from "@/lib/prototypeCalendar";
 
@@ -42,8 +44,7 @@ export interface MealPlanSeed {
   zvieri: string;
 }
 
-const HISTORY_DAYS = getHistoryWeekdays();
-const NEXT_WEEK_DAYS = getNextWeekWeekdays();
+const FILLED_DAYS = getFilledWeekdays();
 
 const LUNCH_MENUS: { items: string[]; description: string; znüni: string; zvieri: string }[] = [
   {
@@ -120,15 +121,9 @@ function pick<T>(list: T[], seed: string): T {
 }
 
 function menuForDate(date: string) {
-  const idx = HISTORY_DAYS.indexOf(date);
+  const idx = FILLED_DAYS.indexOf(date);
   if (idx >= 0) return LUNCH_MENUS[idx % LUNCH_MENUS.length]!;
-  const nextIdx = NEXT_WEEK_DAYS.indexOf(date);
-  if (nextIdx >= 0) return LUNCH_MENUS[(nextIdx + 2) % LUNCH_MENUS.length]!;
   return LUNCH_MENUS[0]!;
-}
-
-function isMorningSchedule(schedule?: string) {
-  return schedule === "full" || schedule === "morning" || schedule === "morning_lunch";
 }
 
 function checkInTimeFor(child: Child, date: string): string {
@@ -140,7 +135,7 @@ function checkInTimeFor(child: Child, date: string): string {
 
 function buildMealPlans(): Record<string, MealPlanSeed> {
   const plans: Record<string, MealPlanSeed> = {};
-  for (const date of HISTORY_DAYS) {
+  for (const date of FILLED_DAYS) {
     const menu = menuForDate(date);
     plans[date] = {
       znüni: menu.znüni,
@@ -149,27 +144,15 @@ function buildMealPlans(): Record<string, MealPlanSeed> {
       zvieri: menu.zvieri,
     };
   }
-  for (const date of NEXT_WEEK_DAYS) {
-    const menu = menuForDate(date);
-    plans[date] = {
-      znüni: menu.znüni,
-      lunchItems: [...menu.items],
-      lunchDescription: menu.description,
-      zvieri: menu.zvieri,
-    };
-  }
-  // Opening day: empty plans (Kita opens, nothing logged yet)
-  plans[PROTOTYPE_TODAY] = { znüni: "", lunchItems: [], lunchDescription: "", zvieri: "" };
   return plans;
 }
 
 function buildAttendance(): AttendanceRecord[] {
   const records: AttendanceRecord[] = [];
   let n = 0;
-  for (const date of HISTORY_DAYS) {
+  for (const date of FILLED_DAYS) {
     for (const child of mockChildren) {
       n += 1;
-      // Deterministic sparse absences (~1 in 12)
       const absent = hashString(`abs-${child.id}-${date}`) % 12 === 0;
       if (absent) {
         records.push({
@@ -201,7 +184,7 @@ function buildKidDayData(
     attendance.filter((a) => a.status === "present").map((a) => `${a.date}:${a.childId}`)
   );
 
-  for (const date of HISTORY_DAYS) {
+  for (const date of FILLED_DAYS) {
     const plan = mealPlans[date]!;
     const dayMap: Record<string, KidDayDataSeed> = {};
     for (const child of mockChildren) {
@@ -216,15 +199,11 @@ function buildKidDayData(
         activityMorning: pick(MORNING_ACTIVITIES, `am-${seed}`),
         activityAfternoon: pick(AFTERNOON_ACTIVITIES, `pm-${seed}`),
         zvieri: plan.zvieri,
-        infosForParents: hashString(`info-${seed}`) % 5 === 0 ? "Bitte Extra-Wechselkleider mitbringen." : "",
+        infosForParents:
+          hashString(`info-${seed}`) % 5 === 0 ? "Bitte Extra-Wechselkleider mitbringen." : "",
       };
     }
     byDate[date] = dayMap;
-  }
-
-  byDate[PROTOTYPE_TODAY] = {};
-  for (const date of NEXT_WEEK_DAYS) {
-    byDate[date] = {};
   }
   return byDate;
 }
@@ -235,7 +214,7 @@ function buildDayLogEntries(
 ): DayLogEntry[] {
   const entries: DayLogEntry[] = [];
   let n = 0;
-  for (const date of HISTORY_DAYS) {
+  for (const date of FILLED_DAYS) {
     const presentIds = new Set(
       attendance.filter((a) => a.date === date && a.status === "present").map((a) => a.childId)
     );
@@ -319,8 +298,7 @@ function buildDayLogEntries(
 function buildAblaufMeals(mealPlans: Record<string, MealPlanSeed>): AblaufMeal[] {
   const meals: AblaufMeal[] = [];
   let n = 0;
-  const dates = [...HISTORY_DAYS, ...NEXT_WEEK_DAYS];
-  for (const date of dates) {
+  for (const date of FILLED_DAYS) {
     const plan = mealPlans[date];
     if (!plan || (!plan.znüni && plan.lunchItems.length === 0 && !plan.zvieri)) continue;
     n += 1;
@@ -352,7 +330,7 @@ function taskStaffRotation(date: string, taskIndex: number) {
 
 function buildTaskAssignments(): DailyTaskAssignment[] {
   const assignments: DailyTaskAssignment[] = [];
-  for (const date of HISTORY_DAYS) {
+  for (const date of FILLED_DAYS) {
     mockDailyTasks.forEach((task, index) => {
       const staff = taskStaffRotation(date, index);
       assignments.push({
@@ -370,7 +348,7 @@ function buildTaskAssignments(): DailyTaskAssignment[] {
 
 function buildStaffBreaks(): StaffBreak[] {
   const breaks: StaffBreak[] = [];
-  for (const date of HISTORY_DAYS) {
+  for (const date of FILLED_DAYS) {
     for (const tmpl of mockStaffBreakTemplates) {
       breaks.push({ ...tmpl, date });
     }
@@ -385,15 +363,12 @@ function buildPresenceByDate(
     string,
     Record<string, "expected" | "present" | "absent_today" | "planned_absence">
   > = {};
+  const filled = new Set(FILLED_DAYS);
 
   for (const date of getSeededDateKeys()) {
     byDate[date] = {};
     for (const child of mockChildren) {
-      if (date === PROTOTYPE_TODAY) {
-        byDate[date][child.id] = isMorningSchedule(child.daySchedule) ? "expected" : "expected";
-        continue;
-      }
-      if (date > PROTOTYPE_TODAY) {
+      if (!filled.has(date) || date > PROTOTYPE_TODAY) {
         byDate[date][child.id] = "expected";
         continue;
       }
@@ -418,9 +393,9 @@ const staffBreaks = buildStaffBreaks();
 const presenceByDate = buildPresenceByDate(attendanceRecords);
 
 export const prototypeHistorySeed = {
-  openingDay: PROTOTYPE_TODAY,
-  historyDays: HISTORY_DAYS,
-  nextWeekDays: NEXT_WEEK_DAYS,
+  openingDay: OPENING_DAY,
+  today: PROTOTYPE_TODAY,
+  filledDays: FILLED_DAYS,
   mealPlansByDate,
   kidDayDataByDate,
   attendanceRecords,

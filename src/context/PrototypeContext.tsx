@@ -333,7 +333,7 @@ export function PrototypeProvider({ children }: { children: React.ReactNode }) {
 
   const getTaskAssignments = useCallback((date?: string): DailyTaskAssignmentState[] => {
     const d = dateKey(date);
-    if (isFutureDate(d) || d === TODAY) return [];
+    if (isFutureDate(d)) return [];
     return mockTaskAssignments
       .filter((t) => t.date === d)
       .map((t) => ({
@@ -341,13 +341,13 @@ export function PrototypeProvider({ children }: { children: React.ReactNode }) {
         taskName: t.taskName,
         staffId: t.staffId,
         staffName: t.staffName,
-        done: isPastDate(d) ? true : t.done,
+        done: isPastDate(d) || d === TODAY ? true : t.done,
       }));
   }, []);
 
   const getBreaks = useCallback((date?: string): DailyBreakState[] => {
     const d = dateKey(date);
-    if (isFutureDate(d) || d === TODAY) return [];
+    if (isFutureDate(d)) return [];
     return mockStaffBreaks
       .filter((b) => b.date === d)
       .map((b) => ({ staffId: b.staffId, startTime: b.startTime, endTime: b.endTime }));

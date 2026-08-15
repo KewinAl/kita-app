@@ -31,7 +31,7 @@ export function AppointmentsMock() {
     linkDocumentToAppointment,
   } = usePrototypeLead();
   const [title, setTitle] = useState("");
-  const [date, setDate] = useState("2026-08-10");
+  const [date, setDate] = useState("2026-08-17");
   const [time, setTime] = useState("16:00");
   const [type, setType] = useState<AppointmentType>("elterngespraech");
   const [groupId, setGroupId] = useState<string>("");

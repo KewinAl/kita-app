@@ -134,7 +134,7 @@ function defaultAssignmentsByDate() {
 const INITIAL_APPOINTMENTS: LeadAppointment[] = [
   {
     id: "appt-1",
-    date: "2026-08-10",
+    date: "2026-08-17",
     time: "16:00",
     type: "elterngespraech",
     title: "Standortgespräch Emma",
