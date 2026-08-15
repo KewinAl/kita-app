@@ -58,7 +58,10 @@ What they do:
 ## Phase 0 (Done)
 
 - Next.js 15 + Tailwind + shadcn/ui scaffold
-- `(prototype)` route group with mock data
+- `(prototype)` route group with mock data shaped like backend records
+- Opening day fixed to **2026-08-03**; Mon–Fri day switcher (no ±14 clamp)
+- Past 2 weeks seeded with sleep / activities / meals; next week meal plans only
+- Groups sized for spots: Schmetterlinge (≥18mo), Bären (mixed), Igel (<18mo)
 - Group overview with switcher (Schmetterlinge, Bären, Igel)
 - Morning / Lunch / Afternoon counts banner
 - Entgegennehmen (check-in) with Info from parents

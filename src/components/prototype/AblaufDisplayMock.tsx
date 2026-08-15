@@ -17,7 +17,7 @@ import {
   mockGroups,
   mockStaff,
 } from "@/lib/mock";
-import { isFutureDate, isPastDate } from "@/lib/prototypeCalendar";
+import { formatDateShort, isFutureDate, isPastDate } from "@/lib/prototypeCalendar";
 
 const MEAL_LABELS = {
   znueni: "Znüni",
@@ -237,7 +237,7 @@ export function AblaufDisplayMock({ selectedDate }: { selectedDate: string }) {
 
       <header>
         <h1 className="text-xl font-semibold">Ablauf Planung</h1>
-        <p className="text-sm text-muted-foreground">Mi 19. Feb 2025</p>
+        <p className="text-sm text-muted-foreground">{formatDateShort(selectedDate)}</p>
         <p className="text-xs text-muted-foreground">
           Gruppen und geteilte Aufgaben sind vorbereitet; Details werden spaeter in Einstellungen steuerbar.
         </p>
