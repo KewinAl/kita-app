@@ -3,7 +3,8 @@
  *
  * - Keeps July history (20.–31.7.2026 Mon–Fri)
  * - Fills opening through today (3.8.–14.8.2026 Mon–Fri) with sleep / activities / food / Ablauf
- * - Days after PROTOTYPE_TODAY stay empty
+ * - Days after the seeded fill end (14.8.) stay empty until entered in the UI
+ * - Live “Heute” is the real local date (next Monday on weekends)
  */
 
 import { mockChildren, type Child } from "./children";
