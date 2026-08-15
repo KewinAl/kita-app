@@ -134,7 +134,7 @@ function defaultAssignmentsByDate() {
 const INITIAL_APPOINTMENTS: LeadAppointment[] = [
   {
     id: "appt-1",
-    date: "2025-02-19",
+    date: "2026-08-17",
     time: "16:00",
     type: "elterngespraech",
     title: "Standortgespräch Emma",
@@ -148,9 +148,9 @@ const INITIAL_APPOINTMENTS: LeadAppointment[] = [
 const INITIAL_DOCUMENTS: LeadDocument[] = [
   {
     id: "doc-1",
-    title: "Hausordnung 2025",
+    title: "Hausordnung 2026",
     category: "kita_allgemein",
-    createdAt: "2025-02-10",
+    createdAt: "2026-07-15",
     notes: "Aktuelle Version für Team und Eltern.",
   },
 ];

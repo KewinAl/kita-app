@@ -2,14 +2,16 @@
 
 import React, { createContext, useContext, useState, useCallback } from "react";
 import {
-  mockAttendance,
   mockChildren,
   mockStaffBreaks,
   mockTaskAssignments,
+  mealPlansByDate as seededMealPlans,
+  kidDayDataByDate as seededKidDayData,
+  presenceByDate as seededPresence,
 } from "@/lib/mock";
 import {
   PROTOTYPE_TODAY,
-  getCalendarWindow,
+  getSeededDateKeys,
   isFutureDate,
   isPastDate,
 } from "@/lib/prototypeCalendar";
@@ -95,57 +97,62 @@ const defaultKidData = (): KidDayData => ({
 
 const PrototypeContext = createContext<PrototypeContextValue | null>(null);
 
-const INITIAL_LUNCH = ["Spaghetti", "Sauce", "Salat", "Gemüse"];
-
 function dateKey(date?: string) {
   return date ?? TODAY;
 }
 
-function isMorning(schedule?: string) {
-  return schedule === "full" || schedule === "morning" || schedule === "morning_lunch";
+function emptyPresenceForDate(): Record<string, DailyPresenceStatus> {
+  return Object.fromEntries(mockChildren.map((child) => [child.id, "expected" as const]));
 }
 
-function initialPresenceForDate(date: string): Record<string, DailyPresenceStatus> {
-  const plannedAbsenceIds = new Set(
-    mockAttendance
-      .filter((a) => a.date === TODAY && a.status === "absent")
-      .map((a) => a.childId)
-  );
+function initialPresenceMap(): Record<string, Record<string, DailyPresenceStatus>> {
+  const dates = getSeededDateKeys();
   return Object.fromEntries(
-    mockChildren.map((child) => {
-      if (plannedAbsenceIds.has(child.id)) return [child.id, "planned_absence"];
-      if (isFutureDate(date)) return [child.id, "expected"];
-      if (isPastDate(date)) return [child.id, "present"];
-      return [child.id, isMorning(child.daySchedule) ? "present" : "expected"];
-    })
+    dates.map((d) => [
+      d,
+      { ...emptyPresenceForDate(), ...(seededPresence[d] ?? {}) },
+    ])
   );
-}
-
-function initialLunchItemsForDate(date: string): string[] {
-  return isFutureDate(date) ? [] : [...INITIAL_LUNCH];
 }
 
 export function PrototypeProvider({ children }: { children: React.ReactNode }) {
-  const dates = getCalendarWindow();
+  const dates = getSeededDateKeys();
+
   const [plannedLunchItemsByDate, setPlannedLunchItemsByDate] = useState<Record<string, string[]>>(
-    () => Object.fromEntries(dates.map((d) => [d, initialLunchItemsForDate(d)]))
+    () =>
+      Object.fromEntries(
+        dates.map((d) => [d, [...(seededMealPlans[d]?.lunchItems ?? [])]])
+      )
   );
   const [plannedZnüniByDate, setPlannedZnüniByDate] = useState<Record<string, string>>(() =>
-    Object.fromEntries(dates.map((d) => [d, isFutureDate(d) ? "" : "Obst, Brot"]))
+    Object.fromEntries(dates.map((d) => [d, seededMealPlans[d]?.znüni ?? ""]))
   );
   const [plannedZvieriByDate, setPlannedZvieriByDate] = useState<Record<string, string>>(() =>
-    Object.fromEntries(dates.map((d) => [d, isFutureDate(d) ? "" : "Joghurt, Kekse"]))
+    Object.fromEntries(dates.map((d) => [d, seededMealPlans[d]?.zvieri ?? ""]))
   );
   const [kidDayDataByDate, setKidDayDataByDate] = useState<
     Record<string, Record<string, KidDayData>>
-  >(() => Object.fromEntries(dates.map((d) => [d, {}])));
-  const [dailyPresenceByDate, setDailyPresenceByDate] = useState<
-    Record<string, Record<string, DailyPresenceStatus>>
-  >(() => Object.fromEntries(dates.map((d) => [d, initialPresenceForDate(d)])));
+  >(() =>
+    Object.fromEntries(
+      dates.map((d) => {
+        const seeded = seededKidDayData[d] ?? {};
+        return [
+          d,
+          Object.fromEntries(
+            Object.entries(seeded).map(([childId, data]) => [
+              childId,
+              { ...defaultKidData(), ...data },
+            ])
+          ),
+        ];
+      })
+    )
+  );
+  const [dailyPresenceByDate, setDailyPresenceByDate] = useState(initialPresenceMap);
 
-  const plannedLunchItems = plannedLunchItemsByDate[TODAY] ?? INITIAL_LUNCH;
-  const plannedZnüni = plannedZnüniByDate[TODAY] ?? "Obst, Brot";
-  const plannedZvieri = plannedZvieriByDate[TODAY] ?? "Joghurt, Kekse";
+  const plannedLunchItems = plannedLunchItemsByDate[TODAY] ?? [];
+  const plannedZnüni = plannedZnüniByDate[TODAY] ?? "";
+  const plannedZvieri = plannedZvieriByDate[TODAY] ?? "";
   const kidDayData = kidDayDataByDate[TODAY] ?? {};
   const dailyPresence = dailyPresenceByDate[TODAY] ?? {};
 
@@ -256,7 +263,7 @@ export function PrototypeProvider({ children }: { children: React.ReactNode }) {
     setKidDayDataByDate((prevByDate) => {
       const prev = prevByDate[d] ?? {};
       const current = prev[childId] ?? defaultKidData();
-      const v = (current.lunchPortions ?? 0);
+      const v = current.lunchPortions ?? 0;
       nextVal = (v + 1) % 4;
       return {
         ...prevByDate,
@@ -279,12 +286,10 @@ export function PrototypeProvider({ children }: { children: React.ReactNode }) {
         const idx = order.indexOf(states[itemIndex] ?? "default");
         nextVal = order[(idx + 1) % 3];
         if (nextVal === "only") {
-          // "Only" means this is the single eaten item.
           for (let i = 0; i < lunchItems.length; i += 1) {
             states[i] = i === itemIndex ? "only" : "exclude";
           }
         } else if ((states[itemIndex] ?? "default") === "only" && nextVal === "default") {
-          // Leaving "only" resets all item filters.
           for (let i = 0; i < lunchItems.length; i += 1) {
             states[i] = "default";
           }
@@ -312,7 +317,7 @@ export function PrototypeProvider({ children }: { children: React.ReactNode }) {
       const d = dateKey(date);
       setDailyPresenceByDate((prevByDate) => ({
         ...prevByDate,
-        [d]: { ...(prevByDate[d] ?? {}), [childId]: status },
+        [d]: { ...(prevByDate[d] ?? emptyPresenceForDate()), [childId]: status },
       }));
     },
     []
@@ -329,21 +334,22 @@ export function PrototypeProvider({ children }: { children: React.ReactNode }) {
   const getTaskAssignments = useCallback((date?: string): DailyTaskAssignmentState[] => {
     const d = dateKey(date);
     if (isFutureDate(d)) return [];
-    const source = mockTaskAssignments.filter((t) => t.date === TODAY);
-    return source.map((t) => ({
-      taskId: t.taskId,
-      taskName: t.taskName,
-      staffId: t.staffId,
-      staffName: t.staffName,
-      done: isPastDate(d) ? true : t.done,
-    }));
+    return mockTaskAssignments
+      .filter((t) => t.date === d)
+      .map((t) => ({
+        taskId: t.taskId,
+        taskName: t.taskName,
+        staffId: t.staffId,
+        staffName: t.staffName,
+        done: isPastDate(d) || d === TODAY ? true : t.done,
+      }));
   }, []);
 
   const getBreaks = useCallback((date?: string): DailyBreakState[] => {
     const d = dateKey(date);
     if (isFutureDate(d)) return [];
     return mockStaffBreaks
-      .filter((b) => b.date === TODAY)
+      .filter((b) => b.date === d)
       .map((b) => ({ staffId: b.staffId, startTime: b.startTime, endTime: b.endTime }));
   }, []);
 
